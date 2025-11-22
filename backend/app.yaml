@@ -1,0 +1,16 @@
+# Digital Ocean App Platform configuration
+# The Python version is specified in runtime.txt (python-3.12.7)
+name: backend
+region: nyc
+services:
+  - name: api
+    run_command: uvicorn main:app --host 0.0.0.0 --port 8080
+    environment_slug: python
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    build_command: pip install -r requirements.txt
+    source_dir: .
+    envs:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+
