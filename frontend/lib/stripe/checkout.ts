@@ -4,15 +4,15 @@ import Stripe from 'stripe';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2025-09-30.clover',
-})
-
 export async function createCheckoutSession(priceId: string) {
     const session = await auth()
     if (!session?.user) {
         redirect("/")
     }
+
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+        apiVersion: '2025-09-30.clover',
+    })
 
     const checkoutSession = await stripe.checkout.sessions.create({
         //@ts-expect-error description: stripe

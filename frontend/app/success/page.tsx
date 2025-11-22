@@ -1,13 +1,16 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 async function SuccessPage({ searchParams }: {
     searchParams: { session_id?: string }
 }) {
     if (!searchParams.session_id) {
         redirect("/")
     }
+    
+    // Initialize Stripe inside the function to avoid build-time errors
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
     const session = await stripe.checkout.sessions.retrieve(searchParams.session_id)
 
     if (session.payment_status !== 'paid') {
@@ -28,9 +31,9 @@ async function SuccessPage({ searchParams }: {
             </div>
 
             <div className="mt-6">
-                <a href="/d" className="text-blue-600 hover:underline">
+                <Link href="/d" className="text-blue-600 hover:underline">
                     Go to Dashboard →
-                </a>
+                </Link>
             </div>
         </div>
     );

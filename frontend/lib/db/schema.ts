@@ -74,11 +74,13 @@ export interface Socials {
 }
 
 export interface Users {
+  credits: number | null;
   email: string | null;
   emailVerified: Timestamp | null;
   id: Generated<number>;
   image: string | null;
   name: string | null;
+  stripeCustomerId: string | null;
 }
 
 export interface VerificationToken {
@@ -87,13 +89,35 @@ export interface VerificationToken {
   token: string;
 }
 
+export interface CreditPurchases {
+  amount: number;
+  credits: number;
+  id: Generated<number>;
+  status: string;
+  stripe_payment_intent_id: string;
+  stripe_session_id: string;
+  user_id: number;
+}
+
+export interface Subscriptions {
+  id: Generated<number>;
+  status: string;
+  stripe_current_period_end: Timestamp;
+  stripe_price_id: string;
+  stripe_subscription_id: string;
+  updated_at: Timestamp | null;
+  user_id: number;
+}
+
 export interface DB {
   accounts: Accounts;
   articles: Articles;
+  credit_purchases: CreditPurchases;
   media: Media;
   posts: Posts;
   sessions: Sessions;
   socials: Socials;
+  subscriptions: Subscriptions;
   users: Users;
   verification_token: VerificationToken;
 }

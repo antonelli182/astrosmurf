@@ -1,6 +1,7 @@
 import { auth } from '@/auth';
 import { db } from '@/lib/db/db';
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 
 export default async function DashboardPage() {
     const session = await auth();
@@ -40,9 +41,9 @@ export default async function DashboardPage() {
             ) : (
                 <div className="bg-gray-50 p-4 rounded">
                     <p>Free Plan</p>
-                    <a href="/pricing" className="text-blue-600">
+                    <Link href="/pricing" className="text-blue-600">
                         Upgrade to Premium →
-                    </a>
+                    </Link>
                 </div>
             )}
         </div>

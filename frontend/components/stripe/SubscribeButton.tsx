@@ -1,4 +1,3 @@
-import { createCheckoutSession } from "@/lib/stripe/checkout";
 import { Button } from "../ui/button";
 import { createSubscriptionCheckout } from "@/lib/stripe/subscriptions";
 

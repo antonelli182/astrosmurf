@@ -48,7 +48,7 @@ export default async function ResultPage({
         }
       });
       decodedUrl = urlObj.toString();
-    } catch (e) {
+    } catch {
       // If we can't parse the URL, just ignore the search params
     }
   }

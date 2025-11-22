@@ -3,7 +3,12 @@
 import { SendEmailCommand, SESClient, SESClientConfig } from "@aws-sdk/client-ses"
 
 
-async function sendVerificationRequest({ identifier: email, url }: any) {
+interface SendVerificationRequestParams {
+    identifier: string;
+    url: string;
+}
+
+async function sendVerificationRequest({ identifier: email, url }: SendVerificationRequestParams) {
 
 
     const config: SESClientConfig = {
