@@ -62,7 +62,7 @@ CREATE TABLE media (
   prompt TEXT,
   style TEXT,
   media_type VARCHAR(50) NOT NULL,  -- 'image', 'video', 'comic', etc.
-  media_url TEXT NOT NULL,
+  media_url TEXT NOT NULL, -- s3 or fal link
   date_created TIMESTAMPTZ DEFAULT NOW()
 );
 
