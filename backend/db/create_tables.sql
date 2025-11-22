@@ -51,7 +51,7 @@ CREATE TABLE articles (
   id SERIAL PRIMARY KEY,
   source VARCHAR(200) NOT NULL,
   text TEXT NOT NULL,
-  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user_id INTEGER,
   date_created TIMESTAMPTZ DEFAULT NOW(),
   date_written TIMESTAMPTZ
 );
@@ -59,7 +59,8 @@ CREATE TABLE articles (
 CREATE TABLE media (
   id SERIAL PRIMARY KEY,
   article_id INTEGER NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
-  prompt TEXT NOT NULL,
+  prompt TEXT,
+  style TEXT,
   media_type VARCHAR(50) NOT NULL,  -- 'image', 'video', 'comic', etc.
   media_url TEXT NOT NULL,
   date_created TIMESTAMPTZ DEFAULT NOW()
@@ -73,7 +74,7 @@ CREATE TABLE socials (
   access_token TEXT NOT NULL,
   refresh_token TEXT,
   expires_at TIMESTAMPTZ
-);
+); 
 
 CREATE TABLE posts (
   id SERIAL PRIMARY KEY,
