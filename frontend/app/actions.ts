@@ -112,3 +112,48 @@ export async function generateImageAction(prompt: string): Promise<string> {
   }
 }
 
+/**
+ * Connects to the real backend /generate endpoint
+ */
+export async function generateContentAction(url: string, category: string) {
+  console.log(`[Action] Initiating backend generation for URL: ${url} with style: ${category}`);
+
+  const userId = Math.floor(Math.random() * 1000000); // Auto-generated ID as requested
+
+  const payload = {
+    user_id: userId,
+    link: url,
+    style: category
+  };
+
+  console.log(`[Action] Payload to backend:`, JSON.stringify(payload, null, 2));
+
+  try {
+    const response = await fetch('http://localhost:8000/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[Action] Backend error: ${response.status} ${errorText}`);
+      throw new Error(`Backend failed with status ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log(`[Action] Backend response success:`, data);
+    
+    if (!data.success) {
+        throw new Error(data.error || "Backend returned failure");
+    }
+
+    return data;
+
+  } catch (error) {
+    console.error('[Action] Connection failed:', error);
+    throw new Error('Failed to connect to backend service. Make sure it is running on port 8000.');
+  }
+}

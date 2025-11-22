@@ -1,48 +1,42 @@
 import { GenerationForm } from "@/components/generation-form"
+import Image from "next/image"
 
 export default function LandingPage() {
   return (
-    <main className="min-h-screen p-4 md:p-8 font-mono flex flex-col items-center">
-      <div className="w-full max-w-4xl space-y-8">
+    <main className="min-h-screen flex flex-col items-center justify-center p-4 md:p-8 relative overflow-hidden">
+      
+      <div className="w-full max-w-4xl space-y-12 relative z-10 flex flex-col items-center">
         
-        {/* Terminal Header */}
-        <div className="border-b-2 border-primary pb-4">
-          <div className="flex justify-between items-center mb-2 text-xs md:text-sm opacity-70">
-            <span>SESSION_ID: #99284</span>
-            <span>STATUS: ONLINE</span>
+        {/* Header */}
+        <div className="flex flex-col items-center text-center space-y-6">
+          <div className="relative w-128 h-48 md:w-[40rem] md:h-64">
+            <Image 
+              src="/logo_transparent.png" 
+              alt="Insight Logo" 
+              fill
+              className="object-contain"
+              priority
+            />
           </div>
-          <pre className="text-[10px] md:text-xs leading-[1] whitespace-pre font-bold text-primary overflow-x-hidden">
-{`
-  ___ _  _ ___ ___ ___ _  _ _____ 
- |_ _| \\| / __|_ _/ __| || |_   _|
-  | || .\` \\\\__ \\\\| | (_ | __ | | |  
- |___|_|\\\\_|___/___\\\\___|_||_| |_|  
-`}
-          </pre>
-          <p className="mt-4 text-sm md:text-base typing-cursor inline-block">
-            &gt; SYSTEM_READY...
-          </p>
+          <div className="space-y-2 max-w-xl">
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
+              Interpretability for All
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              Transform any content into visual synthesis. 
+              Create memes, comics, or simplified summaries instantly.
+            </p>
+          </div>
         </div>
 
         {/* Main Content */}
-        <div className="grid gap-8">
-          <div className="border-l-2 border-primary pl-4 space-y-2">
-            <h1 className="text-lg font-bold bg-primary text-black inline-block px-2">
-              MISSION_OBJECTIVE
-            </h1>
-            <p className="text-sm md:text-base max-w-2xl opacity-80">
-              &gt; INPUT: CONTENT_URL
-              <br />
-              &gt; OUTPUT: VISUAL_SYNTHESIS [MEME/COMIC/SIMPLIFY]
-            </p>
-          </div>
-
+        <div className="w-full max-w-2xl">
           <GenerationForm />
         </div>
 
         {/* Footer */}
-        <div className="text-center text-xs opacity-50 pt-8 pb-4">
-          <p>ASTROSMURF_CORP // v2.0.1</p>
+        <div className="text-center text-sm text-muted-foreground/50 pt-8">
+          <p>© 2025 Astrosmurf FLUX. All rights reserved.</p>
         </div>
 
       </div>

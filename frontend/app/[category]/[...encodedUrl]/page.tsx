@@ -17,7 +17,13 @@ export default async function ResultPage({
   const rawPath = segments.join('/');
   
   // Decode the path
-  let decodedUrl = decodeURIComponent(rawPath);
+  let decodedUrl = rawPath;
+  try {
+    decodedUrl = decodeURIComponent(rawPath);
+  } catch (e) {
+    // If decoding fails (e.g. malformed URI sequence), use the raw path
+    console.warn('Failed to decode URL:', rawPath, e);
+  }
   
   // Normalize (ensure protocol, fix split protocols)
   decodedUrl = normalizeUrl(decodedUrl);
