@@ -1,5 +1,5 @@
 openai>=1.13.3
 python-dotenv==1.0.0
 fal-client
-asyncpg==0.28.0
+asyncpg==0.30.0
 httpx>=0.24.0
