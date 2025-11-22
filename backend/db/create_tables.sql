@@ -77,8 +77,8 @@ CREATE TABLE socials (
 
 CREATE TABLE posts (
   id SERIAL PRIMARY KEY,
-  social_account_id INTEGER NOT NULL REFERENCES social_accounts(id) ON DELETE CASCADE,
-  media_id INTEGER NOT NULL REFERENCES generated_media(id) ON DELETE CASCADE,
+  social_account_id INTEGER NOT NULL REFERENCES socials(id) ON DELETE CASCADE,
+  media_id INTEGER NOT NULL REFERENCES media(id) ON DELETE CASCADE,
   caption TEXT,
   scheduled_at TIMESTAMPTZ NOT NULL,
   posted_at TIMESTAMPTZ
