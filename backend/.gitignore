@@ -9,3 +9,6 @@ wheels/
 # Virtual environments
 .venv
 .env
+
+# UV lock file (use requirements.txt for deployment)
+uv.lock

@@ -8,7 +8,7 @@ services:
     environment_slug: python
     instance_count: 1
     instance_size_slug: basic-xxs
-    build_command: pip install -r requirements.txt
+    build_command: bash build.sh
     source_dir: .
     envs:
       - key: PYTHON_VERSION
