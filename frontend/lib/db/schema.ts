@@ -28,16 +28,32 @@ export interface Accounts {
   userId: number;
 }
 
-export interface CreditPurchases {
-  amount: number;
-  created_at: Generated<Timestamp>;
-  credits: number;
-  id: Generated<string>;
-  status: string;
-  stripe_payment_intent_id: string | null;
-  stripe_session_id: string;
-  updated_at: Generated<Timestamp>;
-  user_id: number;
+export interface Articles {
+  date_created: Generated<Timestamp | null>;
+  date_written: Timestamp | null;
+  id: Generated<number>;
+  source: string;
+  text: string;
+  user_id: number | null;
+}
+
+export interface Media {
+  article_id: number;
+  date_created: Generated<Timestamp | null>;
+  id: Generated<number>;
+  media_type: string;
+  media_url: string;
+  prompt: string | null;
+  style: string | null;
+}
+
+export interface Posts {
+  caption: string | null;
+  id: Generated<number>;
+  media_id: number;
+  posted_at: Timestamp | null;
+  scheduled_at: Timestamp;
+  social_account_id: number;
 }
 
 export interface Sessions {
@@ -47,34 +63,22 @@ export interface Sessions {
   userId: number;
 }
 
-export interface Subscriptions {
-  created_at: Generated<Timestamp>;
+export interface Socials {
+  access_token: string;
+  account_identifier: string;
+  expires_at: Timestamp | null;
   id: Generated<number>;
-  status: string;
-  stripe_current_period_end: Timestamp;
-  stripe_price_id: string;
-  stripe_subscription_id: string;
-  updated_at: Generated<Timestamp>;
-  user_id: number;
-}
-
-export interface UsageLogs {
-  amount: number;
-  created_at: Generated<Timestamp>;
-  id: Generated<string>;
-  reason: string;
-  success: boolean;
+  provider: string;
+  refresh_token: string | null;
   user_id: number;
 }
 
 export interface Users {
-  credits: Generated<number>;
   email: string | null;
   emailVerified: Timestamp | null;
   id: Generated<number>;
   image: string | null;
   name: string | null;
-  stripeCustomerId: string | null;
 }
 
 export interface VerificationToken {
@@ -85,10 +89,11 @@ export interface VerificationToken {
 
 export interface DB {
   accounts: Accounts;
-  credit_purchases: CreditPurchases;
+  articles: Articles;
+  media: Media;
+  posts: Posts;
   sessions: Sessions;
-  subscriptions: Subscriptions;
-  usage_logs: UsageLogs;
+  socials: Socials;
   users: Users;
   verification_token: VerificationToken;
 }
