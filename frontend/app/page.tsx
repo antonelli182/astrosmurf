@@ -1,8 +1,14 @@
+import { auth } from "@/auth"
 import SignInButtons from "@/components/auth/SignInButtons"
-import { GenerationForm } from "@/components/generation-form"
 import Image from "next/image"
+import { redirect } from "next/navigation"
 
-export default function LandingPage() {
+export default async function LandingPage() {
+
+  const session = await auth()
+  if (session?.user) {
+    redirect("/d")
+  }
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-4 md:p-8 relative overflow-hidden">
 
