@@ -2,6 +2,8 @@ import asyncio
 import os
 import sys
 from pathlib import Path
+import requests
+import re
 
 # Add the backend directory to the path so we can import from db
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -11,10 +13,41 @@ import httpx
 from dotenv import load_dotenv
 import fal_client
 from db.db import store_media, create_article, get_article_by_id
+from ai.scrape import get_article
 
 load_dotenv()
 
-async def generate_prompt(article_content=None, article_url=None):
+async def decompose_article(article):
+    "decompose article to concepts"
+    prompt = f"""decompose this article into a series of important concepts. Keep it concise but factual
+    {article}
+    Return the concepts in a series of <concept> </concept> tags
+
+    Example:
+    <concept> Here is a concept </concept>
+    """
+    res = await generate_prompt(prompt=prompt)
+    print(res)
+    concepts = extract_concepts(res)
+    print(concepts)
+    return concepts
+
+def extract_concepts(text: str) -> list[str]:
+    pattern = r"<concept>\s*(.*?)\s*</concept>"
+    return re.findall(pattern, text, flags=re.DOTALL)
+
+async def create_generation_prompt(concept, max_length):
+    # Create generation prompt
+    prompt = f"""Create a detailed text-to-image prompt for a social media meme
+    
+    based on this concept: '{concept[:max_length]}...'.Follow the FLUX framework structure and enhancement layers, with careful attention "
+                    "to word order (most important elements first). Include text overlay that's witty and educational.")
+    """
+    system_prompt="""You are an expert in creating detailed, creative prompts for text-to-image models that will generate engaging social media memes following the FLUX Prompt Framework: Subject + Action + Style + Context. Your prompts should use structured descriptions with enhancement layers: Visual Layer (lighting, color palette, composition), Technical Layer (camera settings, lens specs), and Atmospheric Layer (mood, emotional tone). Follow optimal prompt length (30-80 words) and prioritize elements by importance (front-load critical elements). Include specific text integration instructions when needed, placing text in quotation marks with clear placement and style descriptions."""
+    prompt = await generate_prompt(prompt, system_prompt)
+    return prompt
+
+async def generate_prompt(prompt:str="", system_prompt:str=""):
     """Generate a prompt using the Qwen model based on an article content or URL"""
     # Create a custom http client without proxies to avoid compatibility issues
     http_client = httpx.Client(base_url="https://integrate.api.nvidia.com/v1")
@@ -26,24 +59,11 @@ async def generate_prompt(article_content=None, article_url=None):
         http_client = http_client
     )
 
-    # Create user content with article information
-    user_content = "Create a detailed text-to-image prompt for a social media meme"
-    
-    if article_url:
-        user_content += f" based on this article: {article_url}."
-    elif article_content:
-        user_content += f" based on this article content: '{article_content[:500]}...'."  # Limit to 500 chars for prompt
-    else:
-        user_content += " based on AI reward hacking concept."
-        
-    user_content += (" Follow the FLUX framework structure and enhancement layers, with careful attention "
-                    "to word order (most important elements first). Include text overlay that's witty and educational.")
-
     completion = client.chat.completions.create(
         model="qwen/qwen3-next-80b-a3b-thinking",
         messages=[
-            {"role":"system","content":"You are an expert in creating detailed, creative prompts for text-to-image models that will generate engaging social media memes following the FLUX Prompt Framework: Subject + Action + Style + Context. Your prompts should use structured descriptions with enhancement layers: Visual Layer (lighting, color palette, composition), Technical Layer (camera settings, lens specs), and Atmospheric Layer (mood, emotional tone). Follow optimal prompt length (30-80 words) and prioritize elements by importance (front-load critical elements). Include specific text integration instructions when needed, placing text in quotation marks with clear placement and style descriptions."},
-            {"role":"user","content": user_content}
+            {"role":"system","content":system_prompt},
+            {"role":"user","content": prompt}
         ],
         temperature=0.6,
         top_p=0.7,
@@ -90,31 +110,14 @@ async def generate_image(prompt):
     result = await handler.get()
     return result
 
-async def process_article_and_generate_media(article_id=None, article_url=None, article_text=None, style="meme"):
+async def process_article_and_generate_media(article_url=None, style="meme", user_id=None):
     """Process an article and generate media content, storing results in the database"""
     
-    # If article_id provided, fetch the article
-    if article_id:
-        article = await get_article_by_id(article_id)
-        if not article:
-            print(f"Article with ID {article_id} not found")
-            return None
-        article_text = article["text"]
-    
-    # If we have URL but no text, create a new article
-    elif article_url and not article_text:
-        # Create a new article entry
-        article_row = await create_article(source=article_url, text="URL-based article", user_id=None)
-        article_id = article_row["id"]
-    
-    # If we have text but no article_id, create a new article
-    elif article_text and not article_id:
-        article_row = await create_article(source="direct input", text=article_text, user_id=None)
-        article_id = article_row["id"]
-    
+    article_text=get_article(article_url)
+    concepts = await decompose_article(article_text)
+    concept = concepts[0]
     # Generate the prompt using Qwen model
-    prompt = await generate_prompt(article_content=article_text, article_url=article_url)
-    
+    prompt = await create_generation_prompt(concept=concept, max_length=500)
     # Generate the image using fal-ai
     image_result = await generate_image(prompt)
     
@@ -155,5 +158,7 @@ async def main():
     result = await process_article_and_generate_media(article_url=article_url)
     print(result)
 
+    
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(decompose_article())
