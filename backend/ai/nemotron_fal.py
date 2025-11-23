@@ -36,14 +36,14 @@ def extract_concepts(text: str) -> list[str]:
     pattern = r"<concept>\s*(.*?)\s*</concept>"
     return re.findall(pattern, text, flags=re.DOTALL)
 
-async def create_generation_prompt(concept, max_length):
+async def create_generation_prompt(concept, max_length, style="meme"):
     # Create generation prompt
-    prompt = f"""Create a detailed text-to-image prompt for a social media meme
+    prompt = f"""Create a detailed text-to-image prompt for a social media {style}
     
     based on this concept: '{concept[:max_length]}...'.Follow the FLUX framework structure and enhancement layers, with careful attention "
                     "to word order (most important elements first). Include text overlay that's witty and educational.")
     """
-    system_prompt="""You are an expert in creating detailed, creative prompts for text-to-image models that will generate engaging social media memes following the FLUX Prompt Framework: Subject + Action + Style + Context. Your prompts should use structured descriptions with enhancement layers: Visual Layer (lighting, color palette, composition), Technical Layer (camera settings, lens specs), and Atmospheric Layer (mood, emotional tone). Follow optimal prompt length (30-80 words) and prioritize elements by importance (front-load critical elements). Include specific text integration instructions when needed, placing text in quotation marks with clear placement and style descriptions."""
+    system_prompt=f"""You are an expert in creating detailed, creative prompts for text-to-image models that will generate engaging social media {style} following the FLUX Prompt Framework: Subject + Action + Style + Context. Your prompts should use structured descriptions with enhancement layers: Visual Layer (lighting, color palette, composition), Technical Layer (camera settings, lens specs), and Atmospheric Layer (mood, emotional tone). Follow optimal prompt length (30-80 words) and prioritize elements by importance (front-load critical elements). Include specific text integration instructions when needed, placing text in quotation marks with clear placement and style descriptions."""
     prompt = await generate_prompt(prompt, system_prompt)
     return prompt
 
@@ -116,7 +116,7 @@ async def process_article_and_generate_media(article_url=None, style="meme", use
     article_text=get_article(article_url)
     concepts = await decompose_article(article_text)
     concept = concepts[0]
-    prompt = await create_generation_prompt(concept=concept, max_length=500)
+    prompt = await create_generation_prompt(concept=concept, max_length=500, style=style)
     image_result = await generate_image(prompt)
     article_id = await create_article(article_url, text="\n ".join(concepts), user_id=user_id)
     
