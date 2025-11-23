@@ -67,7 +67,7 @@ async def generate_prompt(prompt:str="", system_prompt:str=""):
         ],
         temperature=0.6,
         top_p=0.7,
-        max_tokens=4096,
+        max_tokens=2048,
         stream=True
     )
 
@@ -138,11 +138,14 @@ async def process_article_and_generate_media(persona_id = None, article_url=None
     article_text=get_article(article_url)
     concepts = await decompose_article(article_text)
     concept = concepts[0]
-    prompt = await create_generation_prompt(concept=concept, max_length=500,)
+    #prompt = await create_generation_prompt(concept=concept, max_length=500,)
     if persona_id:
+        prompt = f"Generate an image about the concept: {concept} involving the character in this image that illustrate the following concept in the style of a {style}"
         image_result= await generate_image_with_persona(prompt, persona_id)
     else:
+        prompt = f"Generate an image of the following concept in the style of a {style}: {concept}"
         image_result = await generate_image(prompt)
+    print(f"PROMP :{prompt}")
     article = await create_article(article_url, text="\n ".join(concepts), user_id=user_id)
     article_id = article["id"]
     if not image_result or "images" not in image_result:
