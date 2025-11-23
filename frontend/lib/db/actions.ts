@@ -70,3 +70,7 @@ export async function fetchAllMedia() {
 
     return media
 }
+
+export async function createPersona() {
+
+}

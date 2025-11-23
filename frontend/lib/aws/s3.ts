@@ -1,6 +1,8 @@
-// This is used for getting user input.
-import { createInterface } from "node:readline/promises";
+"use server"
 
+export async function uploadFile() {
+    //implement
+}
 import {
     S3Client,
     PutObjectCommand,
