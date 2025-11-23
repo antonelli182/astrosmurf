@@ -27,6 +27,7 @@ async def generate_media(req: GenerateRequest):
     """FastAPI endpoint to trigger media generation"""
     result = await process_article_and_generate_media(
         article_url=req.link,
+        style= req.style
     )
 
     if not result:
