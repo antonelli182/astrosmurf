@@ -8,7 +8,7 @@ fal.config({
 });
 
 
-async function generate_image_from_text(prompt: string) {
+async function generateImageFromText(prompt: string) {
     const result = await fal.subscribe("fal-ai/flux/dev", {
         input: {
             prompt
@@ -17,7 +17,7 @@ async function generate_image_from_text(prompt: string) {
     return result
 }
 
-async function generate_image_from_text_and_image(prompt: string, image_url: string) {
+async function generateImageFromTextAndImage(prompt: string, image_url: string) {
     const result = await fal.subscribe("fal-ai/flux/dev/image-to-image", {
         input: {
             prompt,
@@ -36,4 +36,4 @@ async function inference(prompt: string) {
     return response.output_text
 }
 
-export { inference, generate_image_from_text, generate_image_from_text_and_image }
+export { inference, generateImageFromText, generateImageFromTextAndImage }

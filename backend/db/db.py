@@ -54,6 +54,11 @@ async def get_media_by_id(media_id):
     query = "SELECT * FROM media WHERE id = $1"
     return await db.fetchrow(query, media_id)
 
+async def get_persona_by_id(persona_id):
+    db = await Database.get_instance()
+    query = "SELECT * FROM personas where persona_id = $1"
+    return await db.fetchrow(query, persona_id)
+
 async def get_media_by_article(article_id):
     db = await Database.get_instance()
     query = "SELECT * FROM media WHERE article_id = $1"

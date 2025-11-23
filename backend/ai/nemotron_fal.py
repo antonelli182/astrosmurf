@@ -12,7 +12,7 @@ from openai import OpenAI
 import httpx
 from dotenv import load_dotenv
 import fal_client
-from db.db import store_media, create_article, get_article_by_id
+from db.db import get_persona_by_id, store_media, create_article, get_article_by_id
 from ai.scrape import get_article
 
 load_dotenv()
@@ -110,14 +110,38 @@ async def generate_image(prompt):
     result = await handler.get()
     return result
 
-async def process_article_and_generate_media(article_url=None, style="meme", user_id=1):
+async def generate_image_with_persona(prompt, persona_id):
+    persona = await get_persona_by_id(persona_id)
+    print(persona)
+    print(f"Generating Image with prompt: {prompt}")
+    handler  = await fal_client.submit_async(
+        "fal-ai/flux/dev/image-to-image",
+        arguments={
+            "image_url": persona_id["image_url"],
+            "prompt": prompt
+        },
+    )
+
+    async for event in handler.iter_events(with_logs=True):
+        print(event)
+
+    result = await handler.get()
+
+    print(result)
+    return result
+
+
+async def process_article_and_generate_media(persona_id = None, article_url=None, style="meme", user_id=1):
     """Process an article and generate media content, storing results in the database"""
     
     article_text=get_article(article_url)
     concepts = await decompose_article(article_text)
     concept = concepts[0]
     prompt = await create_generation_prompt(concept=concept, max_length=500,)
-    image_result = await generate_image(prompt)
+    if persona_id:
+        image_result= await generate_image_with_persona(prompt, persona_id)
+    else:
+        image_result = await generate_image(prompt)
     article = await create_article(article_url, text="\n ".join(concepts), user_id=user_id)
     article_id = article["id"]
     if not image_result or "images" not in image_result:

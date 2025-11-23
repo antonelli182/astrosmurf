@@ -3,7 +3,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from ai.nemotron_fal import process_article_and_generate_media
+from ai.nemotron_fal import process_article_and_generate_media, generate_image
 from db.db import get_media_by_id
 from x.post import post_media_to_twitter
 
@@ -22,6 +22,7 @@ class GenerateRequest(BaseModel):
     user_id: int| None = None
     link: str | None = None
     style: str
+    persona_id: int | None = None
 
 
 class PostToXRequest(BaseModel):
@@ -30,12 +31,17 @@ class PostToXRequest(BaseModel):
     text: str = ""
 
 
+class GenerateImageRequest(BaseModel):
+    prompt: str
+
+
 @app.post("/generate")
 async def generate_media(req: GenerateRequest):
     """FastAPI endpoint to trigger media generation"""
     result = await process_article_and_generate_media(
         article_url=req.link,
-        style= req.style
+        style= req.style,
+        persona_id = req.persona_id
     )
 
     if not result:
@@ -61,6 +67,26 @@ async def post_to_x(req: PostToXRequest):
     try:
         result = await post_media_to_twitter(media_url, req.text)
         return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/generate_image")
+async def generate_image_endpoint(req: GenerateImageRequest):
+    """Generate an image from a text prompt"""
+    try:
+        result = await generate_image(req.prompt)
+
+        if not result or "images" not in result:
+            raise HTTPException(status_code=500, detail="Failed to generate image")
+
+        image_url = result["images"][0]["url"]
+
+        return {
+            "success": True,
+            "image_url": image_url,
+            "metadata": result["images"][0]
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
