@@ -1,19 +1,45 @@
-import Image from "next/image";
-import Logo from "@/public/logo_black.svg"
-import { ChevronLeft } from "lucide-react";
-import SignOutButton from "@/components/auth/SignOutButton";
-function DasboardPage() {
-    return (
-        <div className="w-full flex">
-            <div className="w-full max-w-2xl mx-auto flex flex-col gap-2 p-4 items-center rounded-xl border">
-                <Image src={Logo} alt="Align Arena Logo" className="w-20 h-20" />
-                <h1 className="text-xl font-semibold">Thanks for signing up!</h1>
-                <p className="text-gray-700">Insight is open to select beta users at this time. We&apos;ll notify you when your account has been enabled.</p>
-                <a href="https://alignarena.com/insight" className="underline text-gray-700 flex gap-2 items-center"><ChevronLeft /> Back</a>
-                <SignOutButton />
-            </div>
-        </div>
-    );
-}
+import { GenerationForm } from "@/components/generation-form"
+import Image from "next/image"
 
-export default DasboardPage;
+export default function LandingPage() {
+  return (
+    <main className="min-h-screen flex flex-col items-center justify-center p-4 md:p-8 relative overflow-hidden">
+
+      <div className="w-full max-w-4xl space-y-12 relative z-10 flex flex-col items-center">
+
+        {/* Header */}
+        <div className="flex flex-col items-center text-center space-y-6">
+          <div className="relative w-128 h-48 md:w-[40rem] md:h-64">
+            <Image
+              src="/logo_transparent.png"
+              alt="Insight Logo"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
+          <div className="space-y-2 max-w-xl">
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
+              Amplify Ideas
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              Transform any content into visual synthesis.
+              Create memes, comics, or simplified summaries instantly.
+            </p>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="w-full max-w-2xl">
+          <GenerationForm />
+        </div>
+
+        {/* Footer */}
+        <div className="text-center text-sm text-muted-foreground/50 pt-8">
+          <p>© 2025 Astrosmurf FLUX. All rights reserved.</p>
+        </div>
+
+      </div>
+    </main>
+  )
+}
