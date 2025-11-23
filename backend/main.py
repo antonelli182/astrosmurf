@@ -14,8 +14,25 @@ import requests
 import shutil
 from pathlib import Path
 from datetime import datetime
+import sys
 
 load_dotenv()
+
+# Add Wan-2-1 to Python path for dynamic import
+wan_path = str(Path(__file__).parent.parent / "submodules" / "Wan-2-1")
+if wan_path not in sys.path:
+    sys.path.insert(0, wan_path)
+
+# Import Wan fast generator (dynamic import from submodule)
+try:
+    from generate_integrated_fast import get_generator  # type: ignore[import-not-found]
+    WAN_AVAILABLE = True
+    WAN_GENERATOR = None  # Will be lazily initialized
+except ImportError as e:
+    print(f"Warning: Wan generator not available: {e}")
+    WAN_AVAILABLE = False
+    WAN_GENERATOR = None
+    get_generator = None  # type: ignore[assignment]
 
 app = FastAPI()
 
@@ -56,8 +73,13 @@ async def download_image(url: str, output_path: str) -> str:
 
 
 async def generate_wan_video_from_images(article_id: int, user_id: int = 1):
-    """Generate Wan video from article images"""
+    """Generate Wan video from article images using in-memory model"""
+    global WAN_GENERATOR
+    
     try:
+        if not WAN_AVAILABLE:
+            print("Wan generator not available, skipping")
+            return None
         # Get all image URLs from the article
         print(f"\n=== Fetching images for article {article_id} ===")
         image_urls = await get_media_urls_by_article(article_id, media_type='image')
@@ -93,53 +115,40 @@ async def generate_wan_video_from_images(article_id: int, user_id: int = 1):
         print(f"\n=== Generating Wan video ===")
         print(f"Reference images: {src_ref_images}")
         
-        # Path to Wan generate script
-        wan_dir = Path(__file__).parent.parent / "submodules" / "Wan-2-1"
-        generate_script = wan_dir / "generate_integrated.py"
-        
-        if not generate_script.exists():
-            print(f"Wan generate script not found at {generate_script}, skipping")
-            return None
-        
-        # Wan model checkpoint path
-        ckpt_dir = os.getenv("WAN_CKPT_DIR", "/home/ubuntu/karthik-ragunath-ananda-kumar-utah/unianimate-dit/Wan2.1-VACE-1.3B")
+        # Lazy load the generator (models loaded once, kept in memory)
+        if WAN_GENERATOR is None:
+            ckpt_dir = os.getenv("WAN_CKPT_DIR", "/home/ubuntu/karthik-ragunath-ananda-kumar-utah/unianimate-dit/Wan2.1-VACE-1.3B")
+            print("🔄 Loading Wan models (first run - this will take a while)...")
+            WAN_GENERATOR = get_generator(
+                task="vace-1.3B",
+                ckpt_dir=ckpt_dir,
+                device_id=0
+            )
+            print("✓ Models loaded and cached in memory!")
+        else:
+            print("⚡ Using cached Wan models (FAST!)")
         
         # Define output video path in run_dir
         output_video_filename = f"wan_video_{timestamp}.mp4"
         output_video_path = run_dir / output_video_filename
         
-        # Build command
-        cmd = [
-            "python",
-            str(generate_script),
-            "--task", "vace-1.3B",
-            "--size", "832*480",
-            "--ckpt_dir", ckpt_dir,
-            "--src_ref_images", src_ref_images,
-            "--prompt", prompt,
-            "--sample_steps", "25",
-            "--frame_num", "41",
-            "--offload_model", "true",
-            "--save_file", str(output_video_path)
-        ]
-        
-        print(f"Running Wan generation...")
-        
-        # Run Wan generation
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            cwd=str(wan_dir)
+        # Generate video using in-memory model (FAST!)
+        print("Generating video with cached models...")
+        output_file = WAN_GENERATOR.generate(
+            prompt=prompt,
+            src_ref_images=src_ref_images,
+            save_file=str(output_video_path),
+            size="832*480",
+            frame_num=41,
+            sample_steps=25,
+            sample_shift=16.0,
+            sample_solver='unipc',
+            guide_scale=5.0,
+            base_seed=-1,
+            offload_model=True
         )
         
-        if result.returncode != 0:
-            print(f"Error running Wan: {result.stderr}")
-            return None
-        
-        print(result.stdout)
-        
-        # Check if video was generated in run_dir
+        # Check if video was generated
         if not output_video_path.exists():
             print(f"Video not found at expected path: {output_video_path}")
             return None
