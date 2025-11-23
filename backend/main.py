@@ -5,8 +5,15 @@ from pydantic import BaseModel
 
 from ai.nemotron_fal import process_article_and_generate_media, generate_image
 from ai.nemotron_manim_generator import process_article_and_generate_media as process_article_and_generate_manim
-from db.db import get_media_by_id
+from db.db import get_media_by_id, store_media, get_media_urls_by_article
 from x.post import post_media_to_twitter
+from utils.s3_upload import upload_to_s3
+import os
+import subprocess
+import requests
+import shutil
+from pathlib import Path
+from datetime import datetime
 
 load_dotenv()
 
@@ -36,6 +43,145 @@ class GenerateImageRequest(BaseModel):
     prompt: str
 
 
+async def download_image(url: str, output_path: str) -> str:
+    """Download image from URL to local path"""
+    response = requests.get(url, stream=True)
+    response.raise_for_status()
+    
+    with open(output_path, 'wb') as f:
+        for chunk in response.iter_content(chunk_size=8192):
+            f.write(chunk)
+    
+    return output_path
+
+
+async def generate_wan_video_from_images(article_id: int, user_id: int = 1):
+    """Generate Wan video from article images"""
+    try:
+        # Get all image URLs from the article
+        print(f"\n=== Fetching images for article {article_id} ===")
+        image_urls = await get_media_urls_by_article(article_id, media_type='image')
+        
+        if not image_urls:
+            print("No images found, skipping Wan video generation")
+            return None
+        
+        print(f"Found {len(image_urls)} images for Wan video generation")
+        
+        # Create directory for this run with timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        wan_dir_base = Path(__file__).parent.parent / "submodules" / "Wan-2-1"
+        run_dir = wan_dir_base / "wan_generated" / f"run_{timestamp}"
+        run_dir.mkdir(parents=True, exist_ok=True)
+        
+        print(f"Created run directory: {run_dir}")
+        
+        # Download all images locally
+        local_image_paths = []
+        for i, url in enumerate(image_urls):
+            output_path = run_dir / f"ref_image_{i}.png"
+            await download_image(url, str(output_path))
+            local_image_paths.append(str(output_path))
+        
+        # Join paths with comma for Wan input
+        # src_ref_images = ",".join(local_image_paths)
+        src_ref_images = local_image_paths[0]
+        
+        # Generate prompt for video
+        prompt = "create a coherent video animation using the reference images with smooth transitions and engaging movement"
+        
+        print(f"\n=== Generating Wan video ===")
+        print(f"Reference images: {src_ref_images}")
+        
+        # Path to Wan generate script
+        wan_dir = Path(__file__).parent.parent / "submodules" / "Wan-2-1"
+        generate_script = wan_dir / "generate_integrated.py"
+        
+        if not generate_script.exists():
+            print(f"Wan generate script not found at {generate_script}, skipping")
+            return None
+        
+        # Wan model checkpoint path
+        ckpt_dir = os.getenv("WAN_CKPT_DIR", "/home/ubuntu/karthik-ragunath-ananda-kumar-utah/unianimate-dit/Wan2.1-VACE-1.3B")
+        
+        # Define output video path in run_dir
+        output_video_filename = f"wan_video_{timestamp}.mp4"
+        output_video_path = run_dir / output_video_filename
+        
+        # Build command
+        cmd = [
+            "python",
+            str(generate_script),
+            "--task", "vace-1.3B",
+            "--size", "832*480",
+            "--ckpt_dir", ckpt_dir,
+            "--src_ref_images", src_ref_images,
+            "--prompt", prompt,
+            "--sample_steps", "25",
+            "--frame_num", "41",
+            "--offload_model", "true",
+            "--save_file", str(output_video_path)
+        ]
+        
+        print(f"Running Wan generation...")
+        
+        # Run Wan generation
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            cwd=str(wan_dir)
+        )
+        
+        if result.returncode != 0:
+            print(f"Error running Wan: {result.stderr}")
+            return None
+        
+        print(result.stdout)
+        
+        # Check if video was generated in run_dir
+        if not output_video_path.exists():
+            print(f"Video not found at expected path: {output_video_path}")
+            return None
+        
+        print(f"\n=== Video generated at: {output_video_path} ===")
+        
+        # Upload to S3
+        print("\n=== Uploading Wan video to S3 ===")
+        try:
+            s3_url = upload_to_s3(str(output_video_path), s3_folder="wan_videos")
+            print(f"Video uploaded to S3: {s3_url}")
+            media_url = s3_url
+        except Exception as e:
+            print(f"Failed to upload to S3: {e}")
+            media_url = str(output_video_path)
+        
+        # Store the media in the database
+        media_row = await store_media(
+            article_id=article_id,
+            prompt=prompt[:500],
+            style="wan_video",
+            media_type="video",
+            media_url=media_url
+        )
+        
+        print(f"\n=== Wan video stored in database with ID {media_row['id']} ===")
+        print(f"All files saved in: {run_dir}")
+        
+        return {
+            "media_id": media_row["id"],
+            "video_url": media_url,
+            "prompt": prompt,
+            "num_reference_images": len(image_urls)
+        }
+        
+    except Exception as e:
+        print(f"Error generating Wan video: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
 @app.post("/generate")
 async def generate_media(req: GenerateRequest):
     """FastAPI endpoint to trigger media generation"""
@@ -49,8 +195,23 @@ async def generate_media(req: GenerateRequest):
     if not result:
         return {"success": False, "error": "Failed to generate media"}
 
+    # After images are generated, automatically generate Wan video
+    wan_result = None
+    try:
+        print("\n=== Starting Wan video generation from generated images ===")
+        wan_result = await generate_wan_video_from_images(
+            article_id=result["article_id"],
+            user_id=req.user_id if req.user_id else 1
+        )
+        if wan_result:
+            print(f"Wan video generated successfully: {wan_result['video_url']}")
+    except Exception as e:
+        print(f"Wan video generation failed (non-fatal): {e}")
+        import traceback
+        traceback.print_exc()
+
     # Format the response to include all generated media
-    return {
+    response = {
         "success": True,
         "article_id": result["article_id"],
         "media_count": result["media_count"],
@@ -62,6 +223,16 @@ async def generate_media(req: GenerateRequest):
             } for entry in result["media_entries"]
         ]
     }
+    
+    # Add Wan video if generated
+    if wan_result:
+        response["wan_video"] = {
+            "media_id": wan_result["media_id"],
+            "video_url": wan_result["video_url"],
+            "num_reference_images": wan_result["num_reference_images"]
+        }
+    
+    return response
 
 
 @app.post("/manim")

@@ -72,6 +72,25 @@ async def get_media_by_id(media_id):
     query = "SELECT * FROM media WHERE id = $1"
     return await db.fetchrow(query, media_id)
 
+async def get_media_urls_by_article(article_id, media_type='image'):
+    """Get all media URLs for a specific article and media type
+    
+    Args:
+        article_id: ID of the article
+        media_type: Type of media to filter by (default: 'image')
+        
+    Returns:
+        List of media_url strings
+    """
+    db = await Database.get_instance()
+    query = """
+        SELECT media_url FROM media 
+        WHERE article_id = $1 AND media_type = $2
+        ORDER BY id
+    """
+    rows = await db.fetch(query, article_id, media_type)
+    return [row['media_url'] for row in rows]
+
 async def delete_media(media_id):
     """Delete media by ID
     
