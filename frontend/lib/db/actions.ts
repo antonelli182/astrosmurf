@@ -55,7 +55,7 @@ export async function fetchAllMedia() {
     const media = await db
         .selectFrom("media")
         .innerJoin("articles", "articles.id", "media.article_id")
-        .where("articles.user_id", "=", Number(session.user.id))
+        // .where("articles.user_id", "=", Number(session.user.id))
         .select([
             "media.id",
             "media.media_url",

@@ -14,8 +14,6 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     if (isNaN(articleId)) {
         notFound()
     }
-
-
     const { article, media } = await fetchArticleWithMedia(articleId)
 
     const formattedDate = article.date_created
