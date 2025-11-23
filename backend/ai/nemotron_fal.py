@@ -116,10 +116,10 @@ async def process_article_and_generate_media(article_url=None, style="meme", use
     article_text=get_article(article_url)
     concepts = await decompose_article(article_text)
     concept = concepts[0]
-    prompt = await create_generation_prompt(concept=concept, max_length=500, style=style)
+    prompt = await create_generation_prompt(concept=concept, max_length=500,)
     image_result = await generate_image(prompt)
-    article_id = await create_article(article_url, text="\n ".join(concepts), user_id=user_id)
-    
+    article = await create_article(article_url, text="\n ".join(concepts), user_id=user_id)
+    article_id = article["id"]
     if not image_result or "images" not in image_result:
         print("Failed to generate image")
         return None

@@ -77,4 +77,4 @@ async def create_article(source, text, user_id=None):
         VALUES ($1, $2, $3)
         RETURNING id
     """
-    return (await db.fetchrow(query, source, text, user_id)).id
+    return await db.fetchrow(query, source, text, user_id)
