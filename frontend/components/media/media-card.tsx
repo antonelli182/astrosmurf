@@ -5,6 +5,7 @@ import { useState } from "react"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Eye, Download, Share2, Loader2, Check } from "lucide-react"
+import { DialogTitle } from "@radix-ui/react-dialog"
 
 export interface MediaItemProps {
   id: number
@@ -18,10 +19,10 @@ export interface MediaItemProps {
   isPosted?: boolean
 }
 
-export function MediaCard({ 
-  id, 
-  media_url, 
-  media_type = "image", 
+export function MediaCard({
+  id,
+  media_url,
+  media_type = "image",
   prompt = "",
   style = "",
   onPostToX,
@@ -79,27 +80,27 @@ export function MediaCard({
 
         {/* Action buttons overlay */}
         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-          <Button 
+          <Button
             size="sm"
-            variant="secondary" 
+            variant="secondary"
             className="rounded-full w-8 h-8 p-0"
             onClick={() => setPreviewOpen(true)}
           >
             <Eye className="w-4 h-4" />
           </Button>
-          
-          <Button 
+
+          <Button
             size="sm"
-            variant="secondary" 
+            variant="secondary"
             className="rounded-full w-8 h-8 p-0"
             onClick={handleDownload}
           >
             <Download className="w-4 h-4" />
           </Button>
-          
-          <Button 
+
+          <Button
             size="sm"
-            variant="secondary" 
+            variant="secondary"
             className="rounded-full w-8 h-8 p-0"
             onClick={handleShare}
           >
@@ -139,6 +140,7 @@ export function MediaCard({
 
       {/* Preview Dialog */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+
         <DialogContent className="max-w-5xl p-1 sm:p-2 bg-black/95 border-gray-800">
           <div className="relative">
             <div className="flex justify-center items-center">
@@ -150,27 +152,27 @@ export function MediaCard({
                   className="max-h-[80vh] max-w-full object-contain"
                 />
               ) : (
-                <video 
+                <video
                   src={media_url}
                   className="max-h-[80vh] max-w-full"
-                  controls 
+                  controls
                   autoPlay
                 />
               )}
             </div>
-            
+
             <div className="absolute bottom-4 right-4 flex gap-2">
-              <Button 
-                variant="secondary" 
-                size="sm" 
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={handleDownload}
               >
                 <Download className="w-4 h-4 mr-2" />
                 Download
               </Button>
-              <Button 
-                variant="secondary" 
-                size="sm" 
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={handleShare}
               >
                 <Share2 className="w-4 h-4 mr-2" />
