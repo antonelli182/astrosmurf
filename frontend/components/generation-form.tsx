@@ -130,7 +130,7 @@ export function GenerationForm({ personas }: { personas: Personas[] }) {
             </div>
           </div>
 
-          <div className="space-y-3">
+          {/* <div className="space-y-3">
             <Label htmlFor="persona" className="text-sm font-medium text-foreground/80">
               Persona (Optional)
             </Label>
@@ -154,7 +154,7 @@ export function GenerationForm({ personas }: { personas: Personas[] }) {
                 ))}
               </SelectContent>
             </Select>
-          </div>
+          </div> */}
 
           <div className="space-y-3">
             <Label className="text-sm font-medium text-foreground/80">Output Format</Label>
