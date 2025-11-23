@@ -268,7 +268,7 @@ async def generate_manim_video(req: GenerateRequest):
 
 
 @app.get("/media")
-async def get_all_media(limit: int = 50, search: str = None):
+async def get_all_media(limit: int = 50, search: str|None = None):
     """Get all media entries from the database
     
     Args:
