@@ -3,7 +3,7 @@ name = "backend"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.121.3",
     "uvicorn>=0.38.0",
@@ -14,4 +14,5 @@ dependencies = [
     "asyncpg==0.30.0",
     "tweepy[async]>=4.16.0",
     "async>=0.6.2",
+    "markdownify>=1.2.2",
 ]
