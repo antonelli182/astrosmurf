@@ -1,28 +1,48 @@
-from tqdm.asyncio import tqdm_asyncio
+from tqdm import tqdm
 import asyncio
 import httpx
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
+from concurrent.futures import ThreadPoolExecutor
 
 load_dotenv()
+
+executor = ThreadPoolExecutor(max_workers=10)
+
+# Reuse HTTP client for efficiency
+http_client = httpx.Client(base_url="https://integrate.api.nvidia.com/v1")
+
+client = OpenAI(
+    base_url="https://integrate.api.nvidia.com/v1",
+    api_key=os.getenv("NVIDIA_API_KEY"),
+    http_client=http_client
+)
+
+async def to_thread(fn, *args, **kwargs):
+    """Run blocking sync code in worker threads."""
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(executor, lambda: fn(*args, **kwargs))
+
+
 
 async def generate_prompt_with_progress(concept, style, pbar,max_concept_length=500):
     prompt = await create_generation_prompt(concept=concept, max_length=max_concept_length, style=style)
     pbar.update(1)
     return prompt
 
-async def generate_multiple_prompts(concepts,style):
-    prompts=[]
-    total = len(concepts)
-    with tqdm_asyncio(total=total, desc="Generating prompts...") as pbar:
-        tasks = [
-            generate_prompt_with_progress(concept, style, pbar)
-            for concept in concepts
-        ]
+async def generate_multiple_prompts(concepts, style="meme"):
+    tasks = [
+        create_generation_prompt(concept, style=style, max_length=500)
+        for concept in concepts
+    ]
 
-        prompts = await asyncio.gather(*tasks)
-    return prompts
+    results = []
+    for coro in tqdm(asyncio.as_completed(tasks), total=len(tasks), desc="Generating prompts"):
+        result = await coro
+        results.append(result)
+
+    return results
 
 
 async def create_generation_prompt(concept, max_length, style="meme"):
@@ -79,23 +99,17 @@ async def generate_prompt(prompt:str="", system_prompt:str=""):
     return full_content
 
 
+async def generate_prompt_fast(prompt: str, system_prompt: str):
+    return await to_thread(generate_prompt_fast_sync, prompt, system_prompt)
 
-async def generate_prompt_fast(prompt:str="", system_prompt:str=""):
-    # Create a custom http client without proxies to avoid compatibility issues
-    http_client = httpx.Client(base_url="https://integrate.api.nvidia.com/v1")
-    
-    # Initialize the OpenAI client with the custom http client
-    client = OpenAI(
-        base_url = "https://integrate.api.nvidia.com/v1",
-        api_key = os.getenv("NVIDIA_API_KEY"),
-        http_client = http_client
-    )
+def generate_prompt_fast_sync(prompt: str, system_prompt: str):
+    """Synchronous NVIDIA call (non-streaming, fast)."""
 
     completion = client.chat.completions.create(
         model="nvidia/llama-3.1-nemotron-nano-8b-v1",
         messages=[
-            {"role":"system","content":system_prompt},
-            {"role":"user","content": prompt}
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt},
         ],
         temperature=0.6,
         top_p=0.7,
@@ -103,10 +117,22 @@ async def generate_prompt_fast(prompt:str="", system_prompt:str=""):
         stream=False
     )
 
-    text = completion.choices[0].message.content
-    print(text)
-    return text
-
+    return completion.choices[0].message.content
 
 if __name__ == "__main__":
     asyncio.run(generate_prompt_fast("make a prompt for image of person singing in the rain. Return ONLY the prompt","you are an image_gen model"))
+    async def run_test():
+        concepts = [
+            "Dog astronaut eating ramen",
+            "Stormy sea with glowing jellyfish",
+            "Cyberpunk city viewed from a rooftop",
+            "Wizard forging lightning in a cave",
+            "Person singing in the rain"
+        ]
+
+        prompts = await generate_multiple_prompts(concepts, style="meme")
+        print("\n=== GENERATED PROMPTS ===")
+        for i, p in enumerate(prompts):
+            print(f"\n[{i+1}] {p}\n")
+
+    asyncio.run(run_test())
