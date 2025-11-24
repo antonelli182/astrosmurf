@@ -1,7 +1,9 @@
 import { GenerationForm } from "@/components/generation-form"
+import { fetchAllPersonas } from "@/lib/db/actions"
 import Image from "next/image"
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const personas = await fetchAllPersonas()
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-4 md:p-8 relative overflow-hidden">
 
@@ -31,7 +33,8 @@ export default function LandingPage() {
 
         {/* Main Content */}
         <div className="w-full max-w-2xl">
-          <GenerationForm />
+          {/*@ts-expect-error description: personas date format weird */}
+          <GenerationForm personas={personas} />
         </div>
 
         {/* Footer */}

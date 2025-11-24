@@ -2,10 +2,12 @@
 
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Articles } from "@/lib/db/schema"
+import { fetchAllArticles } from "@/lib/db/actions"
+
+type ArticleType = Awaited<ReturnType<typeof fetchAllArticles>>[number]
 
 interface ArticleCardProps {
-    article: Articles
+    article: ArticleType
 }
 
 export function ArticleCard({ article }: ArticleCardProps) {
@@ -14,7 +16,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
         : "No date"
 
     return (
-        <Link href={`/article/${article.id}`}>
+        <Link href={`/d/articles/${article.id}`}>
             <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
                 <CardHeader>
                     <CardTitle className="line-clamp-2">

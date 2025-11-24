@@ -9,3 +9,7 @@ wheels/
 # Virtual environments
 .venv
 .env
+
+# Manim generated files
+manim/code/
+manim/generated_video/

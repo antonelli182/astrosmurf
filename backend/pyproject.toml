@@ -15,4 +15,5 @@ dependencies = [
     "tweepy[async]>=4.16.0",
     "async>=0.6.2",
     "markdownify>=1.2.2",
+    "pytest>=9.0.1",
 ]

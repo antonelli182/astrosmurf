@@ -84,3 +84,12 @@ CREATE TABLE posts (
   scheduled_at TIMESTAMPTZ NOT NULL,
   posted_at TIMESTAMPTZ
 );
+
+CREATE TABLE personas (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  image_url TEXT,
+  user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  date_created TIMESTAMPTZ DEFAULT NOW()
+);
